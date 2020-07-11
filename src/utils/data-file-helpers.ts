@@ -53,10 +53,10 @@ export async function* readCsvDataFileByLine (version: string, path: string, lin
   for await (const chunk of fileContentIterator) {
     buffer += chunk
     const lines = splitStringWithQuotesPreserved(buffer, lineSeparator)
-    for (const line of lines.slice(0, -1)) yield line
+    for (const line of lines.slice(0, -1)) if (line) yield line
     buffer = lines[lines.length - 1]
   }
-  yield buffer
+  if (buffer) yield buffer
 }
 
 /**
