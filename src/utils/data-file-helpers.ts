@@ -120,13 +120,15 @@ export async function loadCsvData (version: string, tableName: string) {
       const dataRowCells = splitStringWithQuotesPreserved(dataRowContent, ',')
   
       const id = Number(dataRowCells[0])
+      const fieldsData = dataRowCells.slice(1).map(cellContent => parseCsvCellContent(cellContent))
+
       const record: { [key: string]: any } = {}
-      dataRowCells.slice(1).forEach((cellContent, index) => {
+      fieldsData.forEach((fieldData, index) => {
         const key = fields[index].key || `$${index}`
-        record[key] = parseCsvCellContent(cellContent)
+        record[key] = fieldData
       })
   
-      yield { id, record }
+      yield { id, record, fieldsData }
     }
   }
 
