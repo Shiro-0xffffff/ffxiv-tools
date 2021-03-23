@@ -20,7 +20,7 @@ module.exports = merge(commonConfig, {
   },
 
   // DEV 配置
-  devtool: 'cheap-module-eval-source-map',
+  devtool: 'eval-cheap-module-source-map',
   devServer: {
     host: '127.0.0.1',
     port: 4600,

@@ -2,7 +2,6 @@
  * Webpack 配置 - 公共配置
  */
 const path = require('path')
-const webpack = require('webpack')
 
 // 插件
 const autoprefixer = require('autoprefixer')
@@ -42,7 +41,7 @@ module.exports = {
         use: [
           'style-loader',
           { loader: 'css-loader', options: { importLoaders: 1 } },
-          { loader: 'postcss-loader', options: { plugins: [autoprefixer] } },
+          { loader: 'postcss-loader', options: { postcssOptions: { plugins: [autoprefixer] } } },
           { loader: 'less-loader' },
         ],
       },
@@ -51,21 +50,21 @@ module.exports = {
         use: [
           'style-loader',
           { loader: 'css-loader', options: { importLoaders: 1, modules: true } },
-          { loader: 'postcss-loader', options: { plugins: [autoprefixer] } },
+          { loader: 'postcss-loader', options: { postcssOptions: { plugins: [autoprefixer] } } },
           { loader: 'less-loader' },
         ],
       },
       {
         test: /\.css$/,
-        loaders: [
+        use: [
           'style-loader',
           { loader: 'css-loader', options: { importLoaders: 1 } },
-          { loader: 'postcss-loader', options: { plugins: [autoprefixer] } },
+          { loader: 'postcss-loader', options: { postcssOptions: { plugins: [autoprefixer] } } },
         ],
       },
       /*{
         test: /\.(jpe?g|png|gif|svg)$/i,
-        loaders: [
+        use: [
           {
             loader: 'url-loader',
             options: {
@@ -81,9 +80,6 @@ module.exports = {
 
   // 插件
   plugins: [
-    // 带名称导出模块
-    new webpack.NamedModulesPlugin(),
-
     // html 模板处理
     new HtmlWebpackPlugin({ template: './src/index.html' }),
   ],

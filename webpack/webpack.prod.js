@@ -1,5 +1,5 @@
 /**
- * Webpack 配置 - prod 环境
+ * Webpack 配置 - 生产环境
  */
 const path = require('path')
 const { merge } = require('webpack-merge')
