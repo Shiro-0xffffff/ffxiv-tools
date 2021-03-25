@@ -6,11 +6,6 @@
     "esModuleInterop": true,
     "target": "es6",
     "jsx": "react",
-    "typeRoots" : ["./typings"],
-    "baseUrl": ".",
-    "paths": {
-      "@lib/*": ["src/lib/*"],
-      "@utils/*": ["src/utils/*"],
-    }
+    "baseUrl": "."
   }
 }

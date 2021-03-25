@@ -1,26 +1,17 @@
 {
   "name": "ffxiv-tools",
   "private": true,
-  "description": "FFxiv 工具集",
+  "description": "FF14 工具集",
   "repository": {
     "type": "git",
     "url": "https://github.com/Shiro-0xffffff/ffxiv-tools.git"
   },
   "license": "MIT",
   "scripts": {
-    "dev": "webpack serve --config webpack/webpack.dev.js",
-    "build": "webpack -p --config webpack/webpack.prod.js"
-  },
-  "dependencies": {
-    "classnames": "^2.2.6",
-    "dexie": "^3.0.3",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2"
+    "web:dev": "cd packages/ffxiv-tools-web && webpack serve --config webpack/webpack.dev.js",
+    "web:build": "cd packages/ffxiv-tools-web && webpack -p --config webpack/webpack.prod.js"
   },
   "devDependencies": {
-    "@types/classnames": "^2.2.11",
-    "@types/react": "^17.0.3",
-    "@types/react-dom": "^17.0.3",
     "autoprefixer": "^10.2.5",
     "css-loader": "^5.1.3",
     "html-webpack-plugin": "^5.3.1",
@@ -35,5 +26,8 @@
     "webpack-cli": "^4.5.0",
     "webpack-dev-server": "^3.11.2",
     "webpack-merge": "^5.7.3"
-  }
+  },
+  "workspaces": [
+    "./packages/*"
+  ]
 }

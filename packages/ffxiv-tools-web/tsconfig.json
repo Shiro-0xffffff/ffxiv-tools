@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig",
+  "compilerOptions": {
+    "typeRoots" : ["typings"],
+    "paths": {
+      "@lib/*": ["src/lib/*"],
+      "@utils/*": ["src/utils/*"],
+    }
+  }
+}

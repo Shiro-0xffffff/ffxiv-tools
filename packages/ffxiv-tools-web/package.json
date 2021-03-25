@@ -1,0 +1,20 @@
+{
+  "name": "@ffxiv-tools/web",
+  "private": true,
+  "description": "FF14 工具集 - Web 端",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Shiro-0xffffff/ffxiv-tools.git"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "classnames": "^2.2.6",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2"
+  },
+  "devDependencies": {
+    "@types/classnames": "^2.2.11",
+    "@types/react": "^17.0.3",
+    "@types/react-dom": "^17.0.3"
+  }
+}

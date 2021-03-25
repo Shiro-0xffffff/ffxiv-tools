@@ -1,0 +1,13 @@
+{
+  "name": "@ffxiv-tools/database",
+  "private": true,
+  "description": "FF14 工具集 - 数据库",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Shiro-0xffffff/ffxiv-tools.git"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "dexie": "^3.0.3"
+  }
+}
