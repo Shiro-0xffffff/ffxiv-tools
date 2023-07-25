@@ -1,7 +1,6 @@
 /**
  * Webpack 配置 - 开发环境
  */
-const webpack = require('webpack')
 const { merge } = require('webpack-merge')
 
 // 插件
@@ -24,15 +23,6 @@ module.exports = merge(commonConfig, {
   devServer: {
     host: '127.0.0.1',
     port: 4600,
-    publicPath: '/',
-    hot: true,
-    quiet: true,
     historyApiFallback: { disableDotRule: true },
   },
-
-  // 插件
-  plugins: [
-    // 热重载插件
-    new webpack.HotModuleReplacementPlugin(),
-  ],
 })
