@@ -16,7 +16,7 @@ const csvDataFilePath = (version: string, path: string) => (
 async function readCsvDataFile (version: string, path: string): Promise<AsyncIterable<string>> {
   const res = await fetch(csvDataFilePath(version, path))
   return {
-    [Symbol.asyncIterator]: async function* () {
+    async * [Symbol.asyncIterator] () {
       if (!res.body) throw new Error('read data failed')
       const reader = res.body.getReader()
       const decoder = new TextDecoder()
@@ -48,7 +48,7 @@ async function readCsvDataFile (version: string, path: string): Promise<AsyncIte
 // import { Readable } from 'stream'
 // async function readCsvDataFile (version: string, path: string): Promise<AsyncIterable<string>> {
 //   return {
-//     [Symbol.asyncIterator]: async function* () {
+//     async * [Symbol.asyncIterator] () {
 //       const stream = await new Promise<Readable>(resolve => {
 //         get(csvDataFilePath(version, path), res => resolve(res))
 //       })
@@ -79,7 +79,7 @@ function splitStringWithQuotesPreserved (string: string, separator: string): str
 async function readCsvDataFileByLine (version: string, path: string, lineSeparator: string = '\n'): Promise<AsyncIterable<string>> {
   const fileContent = await readCsvDataFile(version, path)
   return {
-    [Symbol.asyncIterator]: async function* () {
+    async * [Symbol.asyncIterator] () {
       let buffer = ''
       for await (const chunk of fileContent) {
         buffer += chunk
