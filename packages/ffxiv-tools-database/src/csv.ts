@@ -11,19 +11,37 @@ const csvDataFilePath = (version: string, path: string) => (
 )
 
 /**
- * 按块读取 CSV 数据文件
+ * 将可读流转化为可异步遍历的对象
  */
-async function readCsvDataFile (version: string, path: string): Promise<AsyncIterable<string>> {
-  const res = await fetch(csvDataFilePath(version, path))
+function readableStreamToAsyncIterable<R = any> (stream: ReadableStream<R>): AsyncIterable<R> {
   return {
     async * [Symbol.asyncIterator] () {
+      const reader = stream.getReader()
+      try {
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) return
+          yield value
+        }
+      } finally {
+        reader.releaseLock()
+      }
+    }
+  }
+}
+
+/**
+ * 按块读取 CSV 数据文件
+ */
+function readCsvDataFile (version: string, path: string): AsyncIterable<string> {
+  return {
+    async * [Symbol.asyncIterator] () {
+      const res = await fetch(csvDataFilePath(version, path))
       if (!res.body) throw new Error('read data failed')
-      const reader = res.body.getReader()
+      const asyncIterableResBody = readableStreamToAsyncIterable(res.body)
       const decoder = new TextDecoder()
-      while (true) {
-        const { value, done } = await reader.read()
-        if (done) return reader.releaseLock()
-        yield decoder.decode(value)
+      for await (const chunk of asyncIterableResBody) {
+        yield decoder.decode(chunk)
       }
     }
   }
@@ -32,7 +50,7 @@ async function readCsvDataFile (version: string, path: string): Promise<AsyncIte
 // Node 读本地版本，备用
 // import { createReadStream } from 'fs'
 // import { resolve, join } from 'path'
-// async function readCsvDataFile (version: string, path: string): Promise<AsyncIterable<string>> {
+// function readCsvDataFile (version: string, path: string): AsyncIterable<string> {
 //   const dataPath = resolve(__dirname, `../../../../ffxiv-data/${version}/data/${path}`)
 //   return {
 //     [Symbol.asyncIterator] () {
@@ -46,7 +64,7 @@ async function readCsvDataFile (version: string, path: string): Promise<AsyncIte
 // 请求内容暂未缓存
 // import { get } from 'https'
 // import { Readable } from 'stream'
-// async function readCsvDataFile (version: string, path: string): Promise<AsyncIterable<string>> {
+// function readCsvDataFile (version: string, path: string): AsyncIterable<string> {
 //   return {
 //     async * [Symbol.asyncIterator] () {
 //       const stream = await new Promise<Readable>(resolve => {
@@ -76,10 +94,10 @@ function splitStringWithQuotesPreserved (string: string, separator: string): str
 /**
  * 按行读取 CSV 数据文件
  */
-async function readCsvDataFileByLine (version: string, path: string, lineSeparator: string = '\n'): Promise<AsyncIterable<string>> {
-  const fileContent = await readCsvDataFile(version, path)
+function readCsvDataFileByLine (version: string, path: string, lineSeparator: string = '\n'): AsyncIterable<string> {
   return {
     async * [Symbol.asyncIterator] () {
+      const fileContent = await readCsvDataFile(version, path)
       let buffer = ''
       for await (const chunk of fileContent) {
         buffer += chunk
@@ -143,7 +161,7 @@ export async function loadCsvData<N extends keyof DataType & string> (version: s
   type T = DataType[N]
 
   // 按行读取 CSV 数据文件的异步迭代器
-  const lines = await readCsvDataFileByLine(version, `rawexd/${tableName}.csv`)
+  const lines = readCsvDataFileByLine(version, `rawexd/${tableName}.csv`)
   const linesIterator = lines[Symbol.asyncIterator]()
 
   // 读取数据表表头下标行
@@ -165,24 +183,34 @@ export async function loadCsvData<N extends keyof DataType & string> (version: s
     fields[index].type = cellContent
   })
 
-  // 之后行为数据行，包装成为能逐行解析生成数据的异步生成器
-  const restLines = { [Symbol.asyncIterator]: () => linesIterator }
-  async function* recordsGenerator (): AsyncIterable<CsvDataRecord<T>> {
-    for await (const dataRowContent of restLines) {
-      const dataRowCells = splitStringWithQuotesPreserved(dataRowContent, ',')
-  
-      const id = Number(dataRowCells[0])
-      const fieldsData = dataRowCells.slice(1).map(cellContent => parseCsvCellContent(cellContent) as T[keyof T])
+  // 关闭异步迭代器以解除占用，以便后面读取数据行
+  await linesIterator.return!()
 
-      const data: T = {}
-      fieldsData.forEach((fieldData, index) => {
-        const key = fields[index].key || `$${index}` as keyof T
-        data[key] = fieldData
-      })
+  // 用于读取数据行的异步生成器
+  const records: AsyncIterable<CsvDataRecord<T>> = {
+    async * [Symbol.asyncIterator] () {
+      // 每次被遍历时重新获取异步迭代器，并跳过前 3 行的元数据行
+      const linesIterator = lines[Symbol.asyncIterator]()
+      for (let lineNumber = 0; lineNumber < 3; lineNumber++) await linesIterator.next()
+
+      // 逐行解析剩下的数据行生成数据
+      const restLines = { [Symbol.asyncIterator]: () => linesIterator }
+      for await (const dataRowContent of restLines) {
+        const dataRowCells = splitStringWithQuotesPreserved(dataRowContent, ',')
+    
+        const id = Number(dataRowCells[0])
+        const fieldsData = dataRowCells.slice(1).map(cellContent => parseCsvCellContent(cellContent) as T[keyof T])
   
-      yield { id, data }
+        const data: T = {}
+        fieldsData.forEach((fieldData, index) => {
+          const key = fields[index].key || `$${index}` as keyof T
+          data[key] = fieldData
+        })
+    
+        yield { id, data }
+      }
     }
   }
 
-  return { fields, records: recordsGenerator() }
+  return { fields, records }
 }
