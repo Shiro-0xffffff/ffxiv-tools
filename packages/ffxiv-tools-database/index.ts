@@ -3,4 +3,6 @@
  */
 export { setCurrentVersion } from './src/version'
 export { Record, Query, Table, loadTable } from './src/table'
-export { DataType } from './src/data-type'
+
+// TODO: 要考虑一下导出方式
+export { GameDataType } from './src/game-data'

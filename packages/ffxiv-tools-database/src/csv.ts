@@ -1,7 +1,7 @@
 /**
  * CSV 数据文件处理
  */
-import { DataType } from './data-type'
+import { GameData, GameDataField, GameDataRecord, GameDataType } from './game-data'
 
 /**
  * CSV 数据文件路径
@@ -111,30 +111,6 @@ function readCsvDataFileByLine (version: string, path: string, lineSeparator: st
 }
 
 /**
- * CSV 数据字段描述
- */
-export interface CsvDataField<T> {
-  key: keyof T
-  type?: string
-}
-
-/**
- * CSV 数据记录
- */
-export interface CsvDataRecord<T> {
-  id: number
-  data: T
-}
-
-/**
- * CSV 数据
- */
-export interface CsvData<T> {
-  fields: CsvDataField<T>[]
-  records: AsyncIterable<CsvDataRecord<T>>
-}
-
-/**
  * 解析 CSV 单元格数据
  */
 function parseCsvCellContent (content: string): string | number | boolean | null {
@@ -155,10 +131,10 @@ function parseCsvCellContent (content: string): string | number | boolean | null
 }
 
 /**
- * 读取 CSV 数据
+ * 从 CSV 读取游戏数据
  */
-export async function loadCsvData<N extends keyof DataType & string> (version: string, tableName: N): Promise<CsvData<DataType[N]>> {
-  type T = DataType[N]
+export async function loadGameDataFromCsv<N extends keyof GameDataType & string> (version: string, tableName: N): Promise<GameData<GameDataType[N]>> {
+  type T = GameDataType[N]
 
   // 按行读取 CSV 数据文件的异步迭代器
   const lines = readCsvDataFileByLine(version, `rawexd/${tableName}.csv`)
@@ -167,7 +143,7 @@ export async function loadCsvData<N extends keyof DataType & string> (version: s
   // 读取数据表表头下标行
   const indicesHeaderLine = await linesIterator.next()
   if (indicesHeaderLine.done) throw new Error('indices missing')
-  const fields: CsvDataField<T>[] = indicesHeaderLine.value.split(',').slice(1).map(() => ({ key: '' as keyof T }))
+  const fields: GameDataField<T>[] = indicesHeaderLine.value.split(',').slice(1).map(() => ({ key: '' as keyof T }))
 
   // 读取数据表表头字段行
   const keysHeaderLine = await linesIterator.next()
@@ -187,7 +163,7 @@ export async function loadCsvData<N extends keyof DataType & string> (version: s
   await linesIterator.return!()
 
   // 用于读取数据行的异步生成器
-  const records: AsyncIterable<CsvDataRecord<T>> = {
+  const records: AsyncIterable<GameDataRecord<T>> = {
     async * [Symbol.asyncIterator] () {
       // 每次被遍历时重新获取异步迭代器，并跳过前 3 行的元数据行
       const linesIterator = lines[Symbol.asyncIterator]()

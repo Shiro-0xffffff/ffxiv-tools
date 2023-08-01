@@ -2,8 +2,8 @@
  * 数据表
  */
 import { getCurrentVersion } from './version'
-import { loadCsvData } from './csv'
-import { DataType } from './data-type'
+import { loadGameDataFromCsv } from './csv'
+import { GameDataType } from './game-data'
 
 /**
  * 数据记录
@@ -68,16 +68,16 @@ function parseQuery<T> (query?: Query<T>): (record: Record<T>) => boolean {
  * @param tableName 数据表名
  * @returns 数据表
  */
-export function loadTable<N extends keyof DataType & string>(tableName: N): Table<DataType[N]> {
-  type T = DataType[N]
+export function loadTable<N extends keyof GameDataType & string>(tableName: N): Table<GameDataType[N]> {
+  type T = GameDataType[N]
 
   const version = getCurrentVersion()
 
   const memStore: Map<number, Record<T>> = new Map()
 
   const loadingPromise = (async () => {
-    const { records: csvRecords } = await loadCsvData(version, tableName)
-    for await (const { id, data } of csvRecords) {
+    const { records: gameDataRecords } = await loadGameDataFromCsv(version, tableName)
+    for await (const { id, data } of gameDataRecords) {
       memStore.set(id, { ...data, $id: id })
     }
   })()
