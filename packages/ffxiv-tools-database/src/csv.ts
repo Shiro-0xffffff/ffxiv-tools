@@ -119,9 +119,9 @@ export async function loadGameDataFromCsv<N extends keyof GameDataType & string>
   const lines = readCsvDataFileByLine(version, `rawexd/${tableName}.csv`)
 
   // 读取数据表表头下标行
-  const indicesHeaderLine = await lines.next()
-  if (indicesHeaderLine.done) throw new Error('indices missing')
-  const fields: GameDataField<T>[] = indicesHeaderLine.value.split(',').slice(1).map(() => ({ key: '' as keyof T }))
+  const indexesHeaderLine = await lines.next()
+  if (indexesHeaderLine.done) throw new Error('indices missing')
+  const fields: GameDataField<T>[] = indexesHeaderLine.value.split(',').slice(1).map(() => ({ key: '' as keyof T }))
 
   // 读取数据表表头字段行
   const keysHeaderLine = await lines.next()
