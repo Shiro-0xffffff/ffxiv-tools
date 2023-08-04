@@ -23,7 +23,7 @@ export interface GameDataRecord<T> {
  */
 export interface GameData<T> {
   fields: GameDataField<T>[]
-  records: AsyncIterable<GameDataRecord<T>>
+  records: AsyncIterableIterator<GameDataRecord<T>>
 }
 
 /**
