@@ -19,10 +19,17 @@ export interface GameDataRecord<T> {
 }
 
 /**
+ * 游戏数据元数据
+ */
+export interface GameDataMetaData<T> {
+  fields: GameDataField<T>[]
+}
+
+/**
  * 游戏数据
  */
 export interface GameData<T> {
-  fields: GameDataField<T>[]
+  metadata: GameDataMetaData<T>
   records: AsyncIterableIterator<GameDataRecord<T>>
 }
 

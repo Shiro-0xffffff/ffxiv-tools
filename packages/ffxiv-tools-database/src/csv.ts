@@ -155,5 +155,5 @@ export async function loadGameDataFromCsv<N extends keyof GameDataType & string>
     }
   })()
 
-  return { fields, records }
+  return { metadata: { fields }, records }
 }
