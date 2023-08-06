@@ -3,6 +3,7 @@
  */
 import { getCurrentVersion } from './version'
 import { loadGameDataFromCsv } from './csv'
+import { loadGameDataWithCaching } from './cache'
 import { GameDataType } from './game-data'
 
 /**
@@ -76,7 +77,7 @@ export function loadTable<N extends keyof GameDataType & string>(tableName: N): 
   const memStore: Map<number, Record<T>> = new Map()
 
   const loadingPromise = (async () => {
-    const { records: gameDataRecords } = await loadGameDataFromCsv(version, tableName)
+    const { records: gameDataRecords } = await loadGameDataWithCaching(version, tableName, () => loadGameDataFromCsv(version, tableName))
     for await (const { id, data } of gameDataRecords) {
       memStore.set(id, { ...data, $id: id })
     }
