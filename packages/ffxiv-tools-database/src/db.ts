@@ -44,14 +44,14 @@ async function deleteDB (dbName: string): Promise<void> {
 /**
  * 封装数据库事务为 Promise
  */
-async function transaction<R> (db: IDBDatabase, mode: 'readonly' | 'readwrite', operations: (objectStore: IDBObjectStore) => R): Promise<R> {
-  return new Promise((resolve, reject) => {
+async function transaction<R> (db: IDBDatabase, mode: 'readonly' | 'readwrite', operations: (objectStore: IDBObjectStore) => Promise<R>): Promise<R> {
+  return new Promise(async (resolve, reject) => {
     const transaction = db.transaction('data', mode)
 
     transaction.addEventListener('complete', () => resolve(result))
     transaction.addEventListener('error', () => reject(transaction.error))
 
-    const result = operations(transaction.objectStore('data'))
+    const result = await operations(transaction.objectStore('data'))
   })
 }
 
@@ -102,15 +102,18 @@ export async function * readRecordsFromDB<T> (version: string, tableName: string
   const db = await openDB(dbName(version, tableName))
 
   // 逐条读数据库内数据并生产异步迭代器
-  const records = await transaction(db, 'readonly', async function * (objectStore): AsyncIterableIterator<GameDataRecord<T>> {
-    for await (const { key, value } of objectStoreToAsyncIterable<number, T>(objectStore)) {
-      yield { id: key, data: value }
-    }
-  })
+  const bufferedRecords = await transaction(db, 'readonly', async objectStore => {
+    const records = (async function * (): AsyncIterableIterator<GameDataRecord<T>> {
+      for await (const { key, value } of objectStoreToAsyncIterable<number, T>(objectStore)) {
+        yield { id: key, data: value }
+      }
+    })()
 
-  // 对异步迭代器进行缓冲
-  // 这里需要将数据一次性遍历完，因为如果遍历过程不能在一个 tick 内完成，会由于 DB 事务过期导致报错
-  const bufferedRecords = await buffer(records)
+    // 对异步迭代器进行缓冲
+    // 这里需要将数据一次性遍历完，因为如果遍历过程不能在一个 tick 内完成，会由于 DB 事务过期导致报错
+    const bufferedRecords = await buffer(records)
+    return bufferedRecords
+  })
 
   yield* bufferedRecords
 }
