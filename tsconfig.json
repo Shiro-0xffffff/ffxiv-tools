@@ -1,12 +1,13 @@
 {
   "compilerOptions": {
     "strict": true,
-    "module": "commonjs",
+    "module": "ESNext",
     "baseUrl": ".",
     "outDir": "./dist/",
     "sourceMap": true,
     "esModuleInterop": true,
-    "target": "es6",
+    "target": "ES2020",
     "jsx": "react"
-  }
+  },
+  "include": ["packages/**/*"]
 }
