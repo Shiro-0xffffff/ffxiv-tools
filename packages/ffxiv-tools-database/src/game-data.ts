@@ -36,7 +36,7 @@ export interface GameData<T> {
 /**
  * 部分游戏数据的类型定义
  */
-export type GameDataType = {
+export interface GameDataType {
   /**
    * 物品
    */
@@ -45,5 +45,5 @@ export type GameDataType = {
   }
 
   // 其他未定义的数据类型
-  [key: string]: { [key: string]: any }
+  [key: string]: Record<string, any>
 }

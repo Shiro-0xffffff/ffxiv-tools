@@ -1,12 +1,12 @@
 /**
  * 本地键值存储
  */
-import { GameDataMetaData } from './game-data'
+import { type GameDataMetaData } from './game-data'
 
 /**
  * 游戏数据表对应的键值存储 Key
  */
-const kvStorageKey = (version: string, tableName: string) => (
+const kvStorageKey = (version: string, tableName: string): string => (
   `ffxiv-tools-database/ffxiv-data/${version}/${tableName}`
 )
 
@@ -48,7 +48,7 @@ export function markCachingStartedInKVStorage<T> (version: string, tableName: st
  */
 export function markCachingFinishedInKVStorage<T> (version: string, tableName: string): void {
   const kvStorageValue = readFromKVStorage<T>(version, tableName)
-  if (!kvStorageValue || kvStorageValue.cachingState === 'not-started') throw new Error('caching not started')
+  if (kvStorageValue === null || kvStorageValue.cachingState === 'not-started') throw new Error('caching not started')
   writeToKVStorage(version, tableName, { ...kvStorageValue, cachingState: 'finished' })
 }
 
@@ -57,7 +57,7 @@ export function markCachingFinishedInKVStorage<T> (version: string, tableName: s
  */
 export function getCachingStateFromKVStorage<T> (version: string, tableName: string): 'not-started' | 'started' | 'finished' {
   const kvStorageValue = readFromKVStorage<T>(version, tableName)
-  if (!kvStorageValue) return 'not-started'
+  if (kvStorageValue === null) return 'not-started'
   return kvStorageValue.cachingState
 }
 
@@ -66,6 +66,6 @@ export function getCachingStateFromKVStorage<T> (version: string, tableName: str
  */
 export function getMetadataFromKVStorage<T> (version: string, tableName: string): GameDataMetaData<T> {
   const kvStorageValue = readFromKVStorage<T>(version, tableName)
-  if (!kvStorageValue) throw new Error('caching not started')
+  if (kvStorageValue === null) throw new Error('caching not started')
   return kvStorageValue.metadata
 }

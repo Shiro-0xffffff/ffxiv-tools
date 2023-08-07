@@ -32,7 +32,7 @@ export function duplicate<T> (iterator: AsyncIterableIterator<T>, count: number 
 
       // 对于新迭代器每次迭代请求，尝试从缓存获取结果，如果没有缓存中没有则从原迭代器请求，最后清理已被所有新迭代器读取过的缓存部分
       async next () {
-        if (!resultBuffer[iteratorState.iterationIndex]) {
+        if (resultBuffer[iteratorState.iterationIndex] === undefined) {
           resultBuffer.push(await iterator.next())
         }
         const result = resultBuffer[iteratorState.iterationIndex]
@@ -48,14 +48,14 @@ export function duplicate<T> (iterator: AsyncIterableIterator<T>, count: number 
       async return () {
         iteratorState.returned = true
         if (iteratorsState.every(({ returned }) => returned)) {
-          iterator.return?.()
+          await iterator.return?.()
         }
         return { done: true, value: undefined }
       },
 
       // 任何一个新迭代器抛出异常则向原迭代器转发异常
       async throw (err) {
-        iterator.throw?.(err)
+        await iterator.throw?.(err)
         return { done: true, value: undefined }
       },
 

@@ -1,7 +1,7 @@
 /**
  * 数据本地缓存
  */
-import { GameData } from './game-data'
+import { type GameData } from './game-data'
 import { getCachingStateFromKVStorage, getMetadataFromKVStorage, markCachingFinishedInKVStorage, markCachingStartedInKVStorage } from './kv-storage'
 import { readRecordsFromDB, writeRecordsToDB } from './db'
 import { duplicate } from './utils'
@@ -22,7 +22,7 @@ async function isGameDataCached (version: string, tableName: string): Promise<bo
   // TODO: 暂时先写成 1 秒一次的轮询，需改成事件触发
   // TODO: 需考虑缓存到一半页面关闭等中断的情况，可记录开始缓存时间并检查是否超时
   await new Promise(resolve => setTimeout(resolve, 1000))
-  return isGameDataCached(version, tableName)
+  return await isGameDataCached(version, tableName)
 }
 
 /**
@@ -35,10 +35,10 @@ export async function loadGameDataWithCaching<T> (version: string, tableName: st
 
     // 从键值存储中读取元数据
     const metadata = getMetadataFromKVStorage<T>(version, tableName)
-  
+
     // 从数据库中里读取数据流
     const records = readRecordsFromDB<T>(version, tableName)
-  
+
     return { metadata, records }
 
   // 如果没有缓存，从给定的数据源读取数据并存一份到缓存中
@@ -47,23 +47,23 @@ export async function loadGameDataWithCaching<T> (version: string, tableName: st
     // 从数据源读数据，获取元数据和数据流
     const gameData = await loadGameData()
     const { metadata, records } = gameData
-  
+
     // 将数据流拆分为两份副本，一份用来对外输出，一份用来写入缓存
     const [recordsForOutput, recordsForCaching] = duplicate(records)
-  
+
     // 非阻塞地写入缓存
-    ;(async () => {
+    void (async () => {
 
       // 先在键值存储中标记该游戏数据开始写入缓存
       markCachingStartedInKVStorage(version, tableName, metadata)
-    
+
       // 通过数据流将数据写入到数据库
       await writeRecordsToDB(version, tableName, recordsForCaching)
-    
+
       // 最后在键值存储中标记该游戏数据已经写入缓存
       markCachingFinishedInKVStorage(version, tableName)
     })()
-  
+
     return { metadata, records: recordsForOutput }
   }
 }

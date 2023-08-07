@@ -1,13 +1,13 @@
 /**
  * 本地数据库存储
  */
-import { GameDataRecord } from './game-data'
+import { type GameDataRecord } from './game-data'
 import { buffer } from './utils'
 
 /**
  * 游戏数据表对应的数据库名
  */
-const dbName = (version: string, tableName: string) => (
+const dbName = (version: string, tableName: string): string => (
   `ffxiv-tools-database/ffxiv-data/${version}/${tableName}`
 )
 
@@ -45,21 +45,23 @@ async function deleteDB (dbName: string): Promise<void> {
  * 封装数据库事务为 Promise
  */
 async function transaction<R> (db: IDBDatabase, mode: 'readonly' | 'readwrite', operations: (objectStore: IDBObjectStore) => Promise<R>): Promise<R> {
-  return new Promise(async (resolve, reject) => {
-    const transaction = db.transaction('data', mode)
+  const transaction = db.transaction('data', mode)
 
-    transaction.addEventListener('complete', () => resolve(result))
+  const transactionPromise = new Promise<void>((resolve, reject) => {
+    transaction.addEventListener('complete', () => resolve())
     transaction.addEventListener('error', () => reject(transaction.error))
-
-    const result = await operations(transaction.objectStore('data'))
   })
+
+  const result = await operations(transaction.objectStore('data'))
+  await transactionPromise
+  return result
 }
 
 /**
  * 封装对数据库的操作为 Promise
  */
 async function doOperation<T> (request: IDBRequest<T>): Promise<T> {
-  return new Promise((resolve, reject) => {
+  return await new Promise((resolve, reject) => {
     request.addEventListener('success', () => resolve(request.result))
     request.addEventListener('error', () => reject(request.error))
   })
@@ -69,24 +71,24 @@ async function doOperation<T> (request: IDBRequest<T>): Promise<T> {
  * 封装对数据集进行全遍历的异步迭代器
  */
 async function * objectStoreToAsyncIterable<K extends IDBValidKey, V> (objectStore: IDBObjectStore): AsyncIterableIterator<{ key: K, value: V }> {
-  let onSuccess: (cursor: IDBCursorWithValue) => void | undefined
-  let onError: (err: DOMException) => void | undefined
-  
+  let onSuccess: ((cursor: IDBCursorWithValue | null) => void) | undefined
+  let onError: ((err: DOMException) => void) | undefined
+
   const cursorOpenRequest = objectStore.openCursor()
 
   cursorOpenRequest.addEventListener('success', () => {
-    onSuccess(cursorOpenRequest.result!)
+    onSuccess?.(cursorOpenRequest.result)
   })
   cursorOpenRequest.addEventListener('error', () => {
-    onError(cursorOpenRequest.error!)
+    onError?.(cursorOpenRequest.error!)
   })
 
   while (true) {
-    const cursor = await new Promise<IDBCursorWithValue>((resolve, reject) => {
+    const cursor = await new Promise<IDBCursorWithValue | null>((resolve, reject) => {
       onSuccess = cursor => resolve(cursor)
       onError = err => reject(err)
     })
-    if (!cursor) return
+    if (cursor === null) return
     const { key, value } = cursor
     yield { key: key as K, value }
     cursor.continue()
@@ -115,14 +117,14 @@ export async function * readRecordsFromDB<T> (version: string, tableName: string
     return bufferedRecords
   })
 
-  yield* bufferedRecords
+  yield * bufferedRecords
 }
 
 /**
  * 向数据库写入游戏数据的数据流
  */
 export async function writeRecordsToDB<T> (version: string, tableName: string, records: AsyncIterableIterator<GameDataRecord<T>>): Promise<void> {
-  
+
   // 如果数据库存在，删掉重新建
   if (await isDBExists(dbName(version, tableName))) {
     await deleteDB(dbName(version, tableName))

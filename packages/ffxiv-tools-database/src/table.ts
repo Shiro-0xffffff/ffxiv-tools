@@ -1,10 +1,10 @@
 /**
  * 数据表
  */
+import { type GameDataType } from './game-data'
 import { getCurrentVersion } from './version'
 import { loadGameDataFromCsv } from './csv'
 import { loadGameDataWithCaching } from './cache'
-import { GameDataType } from './game-data'
 
 /**
  * 数据记录
@@ -41,7 +41,7 @@ export interface Table<T> {
    * @param query 查询条件
    */
   findAll(query?: Query<T>): Promise<Record<T>[]>
-  
+
   /**
    * 查询所有满足条件的记录数量
    * @param query 查询条件
@@ -56,7 +56,7 @@ export interface Table<T> {
  */
 function parseQuery<T> (query?: Query<T>): (record: Record<T>) => boolean {
   return (record: Record<T>) => {
-    if (!query) return true
+    if (query === undefined) return true
     for (const key in query) {
       if (record[key] !== query[key]) return false // TODO: 逐步完善
     }
@@ -69,15 +69,15 @@ function parseQuery<T> (query?: Query<T>): (record: Record<T>) => boolean {
  * @param tableName 数据表名
  * @returns 数据表
  */
-export function loadTable<N extends keyof GameDataType & string>(tableName: N): Table<GameDataType[N]> {
+export function loadTable<N extends keyof GameDataType & string> (tableName: N): Table<GameDataType[N]> {
   type T = GameDataType[N]
 
   const version = getCurrentVersion()
 
-  const memStore: Map<number, Record<T>> = new Map()
+  const memStore = new Map<number, Record<T>>()
 
   const loadingPromise = (async () => {
-    const { records: gameDataRecords } = await loadGameDataWithCaching(version, tableName, () => loadGameDataFromCsv(version, tableName))
+    const { records: gameDataRecords } = await loadGameDataWithCaching(version, tableName, async () => await loadGameDataFromCsv(version, tableName))
     for await (const { id, data } of gameDataRecords) {
       memStore.set(id, { ...data, $id: id })
     }
