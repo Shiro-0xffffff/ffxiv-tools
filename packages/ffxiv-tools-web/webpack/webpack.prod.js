@@ -22,20 +22,17 @@ module.exports = merge(commonConfig, {
 
   devtool: 'source-map',
 
-  // 压缩
+  // 性能优化
   optimization: {
     splitChunks: {
-      name: true,
       cacheGroups: {
         'vendor': {
           name: 'vendor',
           test: /[\\/]node_modules[\\/]/,
           chunks: 'all',
-          priority: 1,
         },
       },
     },
-    runtimeChunk: true,
   },
 
   // 插件
