@@ -8,8 +8,8 @@
   },
   "license": "MIT",
   "scripts": {
-    "web:dev": "cd packages/ffxiv-tools-web && webpack serve --config webpack/webpack.dev.js",
-    "web:build": "cd packages/ffxiv-tools-web && webpack --config webpack/webpack.prod.js",
+    "web:dev": "cd packages/web && webpack serve --config webpack/webpack.dev.js",
+    "web:build": "cd packages/web && webpack --config webpack/webpack.prod.js",
     "lint": "eslint packages --ext ts,tsx,js,jsx"
   },
   "devDependencies": {
