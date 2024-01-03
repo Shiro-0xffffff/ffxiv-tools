@@ -1,0 +1,10 @@
+{
+  "name": "@ffxiv-tools-apps/demo",
+  "private": true,
+  "description": "FF14 工具集应用 - 测试应用",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Shiro-0xffffff/ffxiv-tools.git"
+  },
+  "license": "MIT"
+}

@@ -31,6 +31,7 @@
     "webpack-merge": "^5.9.0"
   },
   "workspaces": [
-    "./packages/*"
+    "./packages/*",
+    "./packages/apps/*"
   ]
 }
